@@ -4,7 +4,7 @@
 #include "config_ble51.h"
 
 /* USB Device descriptor parameter */
-#define FW_VER_DATE     DP18
+#define FW_VER_DATE     DP5G
 #define VENDOR_ID       0x5944
 #define PRODUCT_ID      0x23EE
 #define DEVICE_VER      0x0001
@@ -16,6 +16,7 @@
 /* key matrix size */
 #define MATRIX_ROWS 7
 #define MATRIX_COLS 16
+#define VIA_EEPROM_LAYOUT_OPTIONS_DEFAULT 4
 //#define FORCE_NKRO //32B
 //#define DEBOUNCE_2BIT_DN 1
 //#define DEBOUNCE_2BIT_UP 1
@@ -38,7 +39,7 @@
 #define turn_on_bt()    do { PORTD &= ~(1<<5); if (UCSR1B == (1<<RXCIE1 | 1<<RXEN1)) WAIT_MS(200); UCSR1B = (1<<RXCIE1 | 1<<RXEN1 | 1<<TXEN1); } while(0)
 
 #define BLE_NAME "Eevee!BLE"
-#define BLE_LIGHT_ON (PORTD & (1<<7)) //RGB Power IO
+#define RGBLIGHT_ON (PORTD & (1<<7))
 
 #define UPDATE_BATTERY_WHEN_CHARGING
 #define BATTERY_CHARGING (~PINE & (1<<2))

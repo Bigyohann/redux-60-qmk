@@ -128,9 +128,10 @@ action_t action_for_keycode(uint16_t keycode) {
             break;
 #endif
 #ifndef NO_ACTION_TAPPING
+        case 0x2000 ... 0x3FFF:
         case QK_MOD_TAP ... QK_MOD_TAP_MAX:
-            mod         = mod_config((keycode >> 0x8) & 0x1F);
-            action.code = ACTION_MODS_TAP_KEY(mod, keycode & 0xFF);
+            mod         = mod_config((keycode >> 0x8) & 0x7F);
+            action.code = keycode;
             break;
 #endif
 #ifdef SWAP_HANDS_ENABLE

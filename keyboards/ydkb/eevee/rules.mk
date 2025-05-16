@@ -29,7 +29,8 @@ SRC +=  matrix.c \
         ec_matrix.c \
         led_fn.c \
         light_ws2812.c \
-        rgblight.c
+        rgblight.c \
+        rawhid_user.c
 
     
 include $(TMK_DIR)/protocol/ble51.mk

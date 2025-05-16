@@ -62,6 +62,7 @@ uint8_t extract_mod_bits(uint16_t code) {
 
     uint8_t mods_to_send = 0;
 
+#if 0
     if (code & QK_RMODS_MIN) { // Right mod flag is set
         if (code & QK_LCTL) mods_to_send |= MOD_BIT(KC_RIGHT_CTRL);
         if (code & QK_LSFT) mods_to_send |= MOD_BIT(KC_RIGHT_SHIFT);
@@ -73,6 +74,18 @@ uint8_t extract_mod_bits(uint16_t code) {
         if (code & QK_LALT) mods_to_send |= MOD_BIT(KC_LEFT_ALT);
         if (code & QK_LGUI) mods_to_send |= MOD_BIT(KC_LEFT_GUI);
     }
+#else
+#if 0 
+    if (code & QK_LCTL) mods_to_send |= MOD_BIT(KC_LEFT_CTRL);
+    if (code & QK_LSFT) mods_to_send |= MOD_BIT(KC_LEFT_SHIFT);
+    if (code & QK_LALT) mods_to_send |= MOD_BIT(KC_LEFT_ALT);
+    if (code & QK_LGUI) mods_to_send |= MOD_BIT(KC_LEFT_GUI);
+#else
+    mods_to_send = (code & 0x0f00) >> 8;
+#endif
+    //Right mod flag 
+    if (code & QK_RMODS_MIN) mods_to_send <<= 4;
+#endif
 
     return mods_to_send;
 }

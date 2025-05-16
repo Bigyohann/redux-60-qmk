@@ -28,6 +28,12 @@ extern keymap_config_t keymap_config;
 
 static uint8_t real_mods = 0;
 static uint8_t weak_mods = 0;
+
+// for Win_Lock And shift + (Shift_KEY) = KEY
+uint8_t block_mods = 0;
+uint8_t lock_mods = 0;
+bool has_mods_key = 0;
+
 #ifdef KEY_OVERRIDE_ENABLE
 static uint8_t weak_override_mods = 0;
 static uint8_t suppressed_mods    = 0;
@@ -230,9 +236,10 @@ bool is_oneshot_enabled(void) {
  * FIXME: needs doc
  */
 void send_keyboard_report(void) {
-    keyboard_report->mods = real_mods;
+    keyboard_report->mods  = real_mods;
     keyboard_report->mods |= weak_mods;
-
+    keyboard_report->mods &= ~block_mods;
+    keyboard_report->mods &= ~lock_mods;
 #ifndef NO_ACTION_ONESHOT
     if (oneshot_mods) {
         if (QS_oneshot_timeout > 0 && has_oneshot_mods_timed_out()) {

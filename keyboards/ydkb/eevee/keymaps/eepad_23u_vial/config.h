@@ -12,6 +12,7 @@
 #define MATRIX_KEYS 24
 
 #define APC_ENABLE
+#define EC_AP_LEVEL2_USER {88,  92,  96, 100, 104, 108, 112, 116}
 
 #undef  BLE_NAME
 #define BLE_NAME "EEPad_23U BLE"

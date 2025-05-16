@@ -1,20 +1,20 @@
 #pragma once
 #undef  PRODUCT_ID
-#define PRODUCT_ID    0x23CB
+#define PRODUCT_ID    0x23CC
 
 #undef  PRODUCT
-#define PRODUCT    HFKB (FW_VER)
+#define PRODUCT    HFKB JP(FW_VER)
 
 #undef  MATRIX_ROWS
 #define MATRIX_ROWS 5
 #undef  MATRIX_COLS
 #define MATRIX_COLS 14
-#define MATRIX_KEYS 62
+#define MATRIX_KEYS 69
 
 #define APC_ENABLE
 
 #undef  BLE_NAME
-#define BLE_NAME "HFKB BLE"
+#define BLE_NAME "HFKB JP BLE"
 
 #define DYNAMIC_KEYMAP_LAYER_COUNT 4
 //#define FLASH_KEYMAP_COUNT 2

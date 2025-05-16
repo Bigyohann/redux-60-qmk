@@ -78,8 +78,16 @@ __attribute__((unused)) static uint16_t vial_keycode_firewall(uint16_t in) {
 
 void vial_handle_cmd(uint8_t *msg, uint8_t length) {
     /* All packets must be fixed 32 bytes */
+    #ifndef RECORE //实际这里编译时会被优化掉，加或不加不影响。
     if (length != VIAL_RAW_EPSIZE)
         return;
+    #endif
+
+    /* 下面打印信息只是用来测试确认 Vial 使用的命令 */
+    for (uint8_t i=0; i<32; i++) {
+        xprintf("%02X ", msg[i]);
+    }
+    print("\n");
 
     /* msg[0] is 0xFE -- prefix vial magic */
     switch (msg[1]) {
@@ -92,7 +100,12 @@ void vial_handle_cmd(uint8_t *msg, uint8_t length) {
             msg[1] = (VIAL_PROTOCOL_VERSION >> 8) & 0xFF;
             msg[2] = (VIAL_PROTOCOL_VERSION >> 16) & 0xFF;
             msg[3] = (VIAL_PROTOCOL_VERSION >> 24) & 0xFF;
+            #ifdef RECORE // Short to save some space, about 32B
+            msg[4] = 0x44;
+            msg[5] = 0x59;
+            #else
             memcpy(&msg[4], keyboard_uid, 8);
+            #endif
 #ifdef VIALRGB_ENABLE
             msg[12] = 1; /* bit flag to indicate vialrgb is supported - so third-party apps don't have to query json */
 #endif
@@ -103,17 +116,25 @@ void vial_handle_cmd(uint8_t *msg, uint8_t length) {
             uint32_t sz = sizeof(keyboard_definition);
             msg[0] = sz & 0xFF;
             msg[1] = (sz >> 8) & 0xFF;
+            #ifndef RECORE //32u4, < 0xFFFF
             msg[2] = (sz >> 16) & 0xFF;
             msg[3] = (sz >> 24) & 0xFF;
+            #endif
             break;
         }
         /* Retrieve 32-bytes block of the definition, page ID encoded within 2 bytes */
         case vial_get_def: {
+            #ifdef RECORE
+            uint16_t page = msg[2] + (msg[3] << 8);
+            uint16_t start = page * VIAL_RAW_EPSIZE;
+            uint16_t end = start + VIAL_RAW_EPSIZE;
+            #else
             uint32_t page = msg[2] + (msg[3] << 8);
             uint32_t start = page * VIAL_RAW_EPSIZE;
             uint32_t end = start + VIAL_RAW_EPSIZE;
             if (end < start || start >= sizeof(keyboard_definition))
                 return;
+            #endif
             if (end > sizeof(keyboard_definition))
                 end = sizeof(keyboard_definition);
             memcpy_P(msg, &keyboard_definition[start], end - start);
@@ -230,7 +251,9 @@ void vial_handle_cmd(uint8_t *msg, uint8_t length) {
         case vial_dynamic_entry_op: {
             switch (msg[2]) {
             case dynamic_vial_get_number_of_entries: {
+              #ifndef RECORE //本身数据有效的只有0，1，2。不清空似乎也没事。
                 memset(msg, 0, length);
+              #endif
                 msg[0] = VIAL_TAP_DANCE_ENTRIES;
                 msg[1] = VIAL_COMBO_ENTRIES;
                 msg[2] = VIAL_KEY_OVERRIDE_ENTRIES;
@@ -303,9 +326,14 @@ void vial_handle_cmd(uint8_t *msg, uint8_t length) {
                 uint8_t idx = msg[3];
                 vial_key_override_entry_t entry;
                 memcpy(&entry, &msg[4], sizeof(entry));
+#ifndef RECORE
                 entry.replacement = vial_keycode_firewall(entry.replacement);
                 msg[0] = dynamic_keymap_set_key_override(idx, &entry);
                 reload_key_override();
+#else
+                msg[0] = dynamic_keymap_set_key_override(idx, &entry);
+                vial_init();
+#endif
                 break;
             }
 #endif

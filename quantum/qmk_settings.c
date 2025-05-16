@@ -27,6 +27,7 @@ static void auto_shift_timeout_apply(void) {
 }
 
 #ifdef MOUSEKEY_ENABLE
+#ifndef RECORE
 static void mousekey_apply(void) {
     mk_delay = QS.mousekey_delay / 10;
     mk_interval = QS.mousekey_interval;
@@ -37,6 +38,7 @@ static void mousekey_apply(void) {
     mk_wheel_max_speed   = QS.mousekey_wheel_max_speed;
     mk_wheel_time_to_max = QS.mousekey_wheel_time_to_max;
 }
+#endif
 #endif
 
 static const qmk_settings_proto_t protos[] PROGMEM = {
@@ -49,6 +51,7 @@ static const qmk_settings_proto_t protos[] PROGMEM = {
    DECLARE_STATIC_SETTING(7, tapping_term),
    DECLARE_STATIC_SETTING(8, tapping),
 #ifdef MOUSEKEY_ENABLE
+#ifndef RECORE
    DECLARE_STATIC_SETTING_NOTIFY(9, mousekey_delay, mousekey_apply),
    DECLARE_STATIC_SETTING_NOTIFY(10, mousekey_interval, mousekey_apply),
    DECLARE_STATIC_SETTING_NOTIFY(11, mousekey_move_delta, mousekey_apply),
@@ -58,6 +61,7 @@ static const qmk_settings_proto_t protos[] PROGMEM = {
    DECLARE_STATIC_SETTING_NOTIFY(15, mousekey_wheel_interval, mousekey_apply),
    DECLARE_STATIC_SETTING_NOTIFY(16, mousekey_wheel_max_speed, mousekey_apply),
    DECLARE_STATIC_SETTING_NOTIFY(17, mousekey_wheel_time_to_max, mousekey_apply),
+#endif
 #endif
    DECLARE_STATIC_SETTING(18, tap_code_delay),
    DECLARE_STATIC_SETTING(19, tap_hold_caps_delay),

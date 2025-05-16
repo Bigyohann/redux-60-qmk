@@ -25,6 +25,9 @@ extern "C" {
 #endif
 
 extern report_keyboard_t *keyboard_report;
+extern uint8_t block_mods;
+extern uint8_t lock_mods;
+extern bool has_mods_key;
 
 void send_keyboard_report(void);
 

@@ -184,6 +184,7 @@ uint32_t via_get_layout_options(void) {
 }
 
 __attribute__((weak)) void via_set_layout_options_kb(uint32_t value) {}
+__attribute__((weak)) void via_set_layout_options_after(void) {}
 
 void via_set_layout_options(uint32_t value) {
     via_set_layout_options_kb(value);
@@ -194,6 +195,7 @@ void via_set_layout_options(uint32_t value) {
         value = value >> 8;
         target--;
     }
+    via_set_layout_options_after();
 }
 
 // Called by QMK core to process VIA-specific keycodes.
@@ -271,7 +273,9 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
 
     switch (*command_id) {
         case id_get_protocol_version: {
+        #if (VIA_PROTOCOL_VERSION > 0xff)
             command_data[0] = VIA_PROTOCOL_VERSION >> 8;
+        #endif
             command_data[1] = VIA_PROTOCOL_VERSION & 0xFF;
             break;
         }
@@ -287,9 +291,12 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
                 }
                 case id_layout_options: {
                     uint32_t value  = via_get_layout_options();
+                    #if (VIA_EEPROM_LAYOUT_OPTIONS_SIZE > 2)
                     command_data[1] = (value >> 24) & 0xFF;
                     command_data[2] = (value >> 16) & 0xFF;
+                    #elif (VIA_EEPROM_LAYOUT_OPTIONS_SIZE > 1)
                     command_data[3] = (value >> 8) & 0xFF;
+                    #endif
                     command_data[4] = value & 0xFF;
                     break;
                 }
@@ -321,7 +328,9 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
                     break;
                 }
                 default: {
+                    #ifndef RECORE
                     raw_hid_receive_kb(data, length);
+                    #endif
                     break;
                 }
             }
@@ -330,12 +339,18 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
         case id_set_keyboard_value: {
             switch (command_data[0]) {
                 case id_layout_options: {
+                    #if (VIA_EEPROM_LAYOUT_OPTIONS_SIZE == 1)
+                    uint8_t value = command_data[4];
+                    #else
                     uint32_t value = ((uint32_t)command_data[1] << 24) | ((uint32_t)command_data[2] << 16) | ((uint32_t)command_data[3] << 8) | (uint32_t)command_data[4];
+                    #endif
                     via_set_layout_options(value);
                     break;
                 }
                 default: {
+                    #ifndef RECORE
                     raw_hid_receive_kb(data, length);
+                    #endif
                     break;
                 }
             }

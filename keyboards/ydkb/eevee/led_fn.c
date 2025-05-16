@@ -59,16 +59,16 @@ void indicator_task(void)
         // capslock color
         rgbled[0].r = 128;
         rgbled[0].b = 128;
-    } else if (rgblight_config.enable == 0) {
-        //rgblight off and no indicator
-        rgblight_timer_disable();
     }
+
     if (indicator_need_update) {
-        rgblight_timer_enable();
-        //直接更新，防止连接指示灯或低电量也fading
-        ws2812_setleds(rgbled);
+        if (RGBLIGHT_ON == 0) rgblight_timer_enable();
+        else ws2812_setleds(rgbled);
         // 清除，为下一次更新做准备。也避免连接指示后，底灯依然处于亮的状态。
         rgblight_clear();
+    } else if (rgblight_config.enable == 0) {
+        if (RGBLIGHT_ON) ws2812_setleds(rgbled); //如果没有mos控制电源的，这里也需要设置一次，以关闭灯。
+        rgblight_timer_disable();
     }
 }
 
@@ -78,12 +78,12 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
             KC_U, // 0 Host Switch 
             KC_B, // 1 Reset
             KC_V, // 2 Output Battery Value
-            KC_L  // C Lock Mode
+            KC_L  // 3 Lock Mode
         };
         // RGB_TOG 0x5cc1, RGB_VAI 0x5cc9, RGB_VAD 0x5cca
         // Toggle, M+, M-, HUE+, HUE-, SAT+, SAT-, VAL+, VAL-
         if (keycode >= RGB_TOG && keycode <= RGB_VAD) rgblight_action(keycode - RGB_TOG);
-        if (keycode >= USER00) {
+        else if (keycode >= USER00) {
             if (keycode < USER04) command_extra(userx_to_command[keycode-USER00]);
             #ifdef PAD00_ENABLE
             else if (keycode == USER04) {
@@ -93,34 +93,4 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
             #endif
         }
     }
-#if 0
-    static uint8_t mod_keys_registered;
-    uint8_t pressed_mods = get_mods();
-    switch (keycode) {
-        case 0x5c00: // via/vial reset to bootloader
-            if (record->event.pressed) {
-                clear_keyboard();
-            }
-            return false;
-        // 0x5f8f for Alt+Esc=f4 and RShift+Esc=~
-        case 0x5F8F:
-            if (record->event.pressed) {
-                if ((pressed_mods & MOD_BIT(KC_RSHIFT)) && (~pressed_mods & MOD_BIT(KC_LCTRL))) {
-                    mod_keys_registered = KC_GRV;
-                } else if (pressed_mods & MOD_BIT(KC_LALT)) {
-                    mod_keys_registered = KC_F4;
-                } else {
-                    mod_keys_registered = KC_ESC;
-                }
-                register_code(mod_keys_registered);
-                send_keyboard_report();
-            } else {
-                unregister_code(mod_keys_registered);
-                send_keyboard_report();
-            }
-            return false;
-        default:
-            return true; // Process all other keycodes normally
-    }
-#endif
 }

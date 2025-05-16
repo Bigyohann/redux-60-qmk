@@ -333,37 +333,45 @@ void process_action(keyrecord_t *record, action_t action) {
     switch (action.kind.id) {
         /* Key and Mods */
         case ACT_LMODS:
-        case ACT_RMODS: {
-            uint8_t mods = (action.kind.id == ACT_LMODS) ? action.key.mods : action.key.mods << 4;
-            if (event.pressed) {
-                if (mods) {
-                    if (IS_MOD(action.key.code) || action.key.code == KC_NO) {
-                        // e.g. LSFT(KC_LEFT_GUI): we don't want the LSFT to be weak as it would make it useless.
-                        // This also makes LSFT(KC_LEFT_GUI) behave exactly the same as LGUI(KC_LEFT_SHIFT).
-                        // Same applies for some keys like KC_MEH which are declared as MEH(KC_NO).
-                        add_mods(mods);
-                    } else {
+        case ACT_RMODS:
+            {
+                uint8_t mods = (action.kind.id == ACT_LMODS) ?  action.key.mods :
+                                                                action.key.mods<<4;
+                if (event.pressed) {
+                    block_mods |= (mods & get_mods());
+                    if (mods && action.key.code) has_mods_key = 1;
+                    /*
+                     if ((get_mods() & MODS_SHIFT_MASK) && (mods & MODS_SHIFT_MASK)) {
+                        block_mods |= MODS_SHIFT_MASK;
+                        mods &= ~MODS_SHIFT_MASK;
+                    }*/
+                    if (mods) {
                         add_weak_mods(mods);
+                        send_keyboard_report();
                     }
-                    send_keyboard_report();
-                }
-                register_code(action.key.code);
-            } else {
-                unregister_code(action.key.code);
-                if (mods) {
-                    if (IS_MOD(action.key.code) || action.key.code == KC_NO) {
-                        del_mods(mods);
-                    } else {
+                    register_code(action.key.code);
+                } else {
+                    block_mods &= ~mods;
+                    has_mods_key = 0;
+                    //block_mods &= ~MODS_SHIFT_MASK;
+                    unregister_code(action.key.code);
+                    if (mods) {
                         del_weak_mods(mods);
+                        send_keyboard_report();
                     }
-                    send_keyboard_report();
                 }
             }
-        } break;
+            break;
 #ifndef NO_ACTION_TAPPING
+        case ACT_LMODS_TAP_II:
+        case ACT_RMODS_TAP_II:
         case ACT_LMODS_TAP:
-        case ACT_RMODS_TAP: {
-            uint8_t mods = (action.kind.id == ACT_LMODS_TAP) ? action.key.mods : action.key.mods << 4;
+        case ACT_RMODS_TAP:
+            {
+                // uint8_t mods = (action.kind.id == ACT_LMODS_TAP) ?  action.key.mods :
+                // ACT_LMODS_TAP 0b10 or ACT_LMODS_TAP_KFT 0b110
+                uint8_t mods = ((action.kind.id & 0b1) == 0) ?  action.key.mods :
+                                                                    action.key.mods<<4;
             switch (action.layer_tap.code) {
 #    ifndef NO_ACTION_ONESHOT
                 case MODS_ONESHOT:
@@ -444,6 +452,40 @@ if (QS_oneshot_tap_toggle > 1) {
                     }
                     break;
                 default:
+#if 1
+                        /* tap key */
+                        if (event.pressed) {
+                            if (tap_count > 0 && !((action.kind.id & 0b0100) && record->tap.interrupted))  {
+                                dprint("MODS_TAP: Tap: register_code\n");
+                                register_code(action.key.code);
+                                    // Delay for MacOS CapsLock
+                                if (action.key.code == KC_CAPSLOCK) {
+                                    qs_wait_ms(QS_tap_hold_caps_delay);
+                                } else {
+                                    qs_wait_ms(QS_tap_code_delay);
+                                }
+                            } else {
+                            // MODS_TAP_INT
+                                dprint("MODS_TAP: Tap: Cancel: add_mods\n");
+                                // ad hoc: set 0 to cancel tap
+                                //record->tap.count = 0;
+                                register_mods(mods);
+                            }
+                        } else {
+                          #if 1
+                            // MODS_TAP_KFT
+                            if (tap_count > 0 && !((action.kind.id & 0b0100) && record->tap.interrupted))  {
+                                dprint("MODS_TAP: Tap: unregister_code\n");
+                                unregister_code(action.key.code);
+                            } else 
+                          #endif
+                            {
+                                dprint("MODS_TAP: No tap: add_mods\n");
+                                unregister_mods(mods);
+                            }
+                        }
+                        break;
+#else
                     if (event.pressed) {
                         if (tap_count > 0) {
 #    if !defined(IGNORE_MOD_TAP_INTERRUPT) || defined(IGNORE_MOD_TAP_INTERRUPT_PER_KEY)
@@ -481,6 +523,7 @@ if (QS_oneshot_tap_toggle > 1) {
                         }
                     }
                     break;
+#endif
             }
         } break;
 #endif
@@ -1078,7 +1121,13 @@ __attribute__((weak)) void unregister_weak_mods(uint8_t mods) {
  */
 void clear_keyboard(void) {
     clear_mods();
-    clear_keyboard_but_mods();
+#ifdef STRICT_LAYER_RELEASE
+    clear_keyboard_but_mods(); // To avoid stuck keys
+#else
+    clear_keys();
+    clear_keyboard_but_mods_and_keys(); // Don't reset held keys
+#endif
+
 }
 
 /** \brief Utilities for actions. (FIXME: Needs better description)
@@ -1139,6 +1188,8 @@ bool is_tap_record(keyrecord_t *record) {
  */
 bool is_tap_action(action_t action) {
     switch (action.kind.id) {
+        case ACT_LMODS_TAP_II:
+        case ACT_RMODS_TAP_II:
         case ACT_LMODS_TAP:
         case ACT_RMODS_TAP:
         case ACT_LAYER_TAP:
@@ -1150,6 +1201,7 @@ bool is_tap_action(action_t action) {
                     return true;
             }
             return false;
+#ifdef SWAP_HANDS_ENABLE  //与 ACT_LMODS_TAP_II 冲突
         case ACT_SWAP_HANDS:
             switch (action.swap.code) {
                 case KC_NO ... KC_RIGHT_GUI:
@@ -1157,6 +1209,7 @@ bool is_tap_action(action_t action) {
                     return true;
             }
             return false;
+#endif
     }
     return false;
 }

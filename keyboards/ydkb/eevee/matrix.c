@@ -87,10 +87,13 @@ void hook_early_init()
 
 void matrix_init(void)
 {
+    user_config_init();
     ec_matrix_init();
     rgblight_init();
 }
 
+#define ADC_MUX (_BV(MUX5) | _BV(MUX0)) //D6 ADC9 MUX5..0:100001
+#define AREF _BV(REFS0) // AVCC with external capacitor on AREF pin
 uint8_t matrix_scan(void)
 {
     uint8_t matrix_keys_down = 0;
@@ -115,12 +118,12 @@ uint8_t matrix_scan(void)
     }
 
     if (matrix_keys_down) {
-        if (BLE_LIGHT_ON == 0) kb_idle_times = 12;
+        if (RGBLIGHT_ON == 0) kb_idle_times = 12;
         else kb_idle_times = 0;
         if (matrix_keys_down >= 20) memset(matrix, 0, sizeof(matrix));
     }
 
-#if defined(DEBUG_SCAN_SPEED) || defined(APC_ENABLE)
+#if defined(DEBUG_SCAN_SPEED)
     static uint16_t test=0;
     static uint16_t test_timestamp = 0;
     test++;
@@ -128,9 +131,6 @@ uint8_t matrix_scan(void)
         test_timestamp = timer_read();
         #ifdef DEBUG_SCAN_SPEED
         scan_speed = test;
-        #endif
-        #ifdef APC_ENABLE
-        ec_apc_update();
         #endif
         test = 0;
       #if CONSOLE_ENABLE

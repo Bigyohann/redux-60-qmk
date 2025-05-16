@@ -26,8 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define ADC_MUX (_BV(MUX5) | _BV(MUX0)) //D6 ADC9 MUX5..0:100001
 #define AREF _BV(REFS0) // AVCC with external capacitor on AREF pin
 
-#define ADC_PRESCALER (_BV(ADPS1) | _BV(ADPS0))
-#define C_CHARGE_WAIT() {if (col == 0 && row == 0) _delay_us(1);}
+#define ADC_PRESCALER1 (_BV(ADPS1) | _BV(ADPS0))
+#define ADC_PRESCALER2 (_BV(ADPS1))
+#define IS_EEVEE1 (ADMUX == (AREF | _BV(ADLAR) | (ADC_MUX & 0b11111)))
+#define C_CHARGE_WAIT() {if (IS_EEVEE1 && col == 0 && row == 0) _delay_us(1);}
 #define C_DISCHARGE_WAIT()
 static inline void C_CHARGE_READY(void) { DDRD &= ~(1<<4); }
 static inline void C_DISCHARGE(void)    { DDRD |=  (1<<4); }
@@ -39,18 +41,28 @@ void adc_init(void)
     // High speed mode and MUX5
     ADCSRB = _BV(ADHSM) | (ADC_MUX & _BV(MUX5));
     //ADLAR 1,   left adjusted,  and MUX4..0
-    ADMUX = AREF | _BV(ADLAR) | (ADC_MUX & 0b11111);
+    if (pgm_read_byte(0x7F7E) != '2') {
+        ADMUX = AREF | _BV(ADLAR) | (ADC_MUX & 0b11111);
+    } else {
+        ADMUX = AREF | (ADC_MUX & 0b11111);
+    }
 }
 
 uint8_t adc_read8(void)
 {
     uint8_t adc_value;
     // Enable ADC and configure prescaler. Start ADC
-    ADCSRA = _BV(ADEN) | _BV(ADSC) | ADC_PRESCALER;
+    if (IS_EEVEE1) {
+        ADCSRA = _BV(ADEN) | _BV(ADSC) | ADC_PRESCALER1;
+    } else {
+        ADCSRA = _BV(ADEN) | _BV(ADSC) | ADC_PRESCALER2;
+    }
 
     // Wait for result
     while (ADCSRA & _BV(ADSC));
-    adc_value = ADCH;
+    adc_value = ADCL;
+    uint8_t adc_value2 = ADCH;
+    if (IS_EEVEE1) adc_value = adc_value2;
     // turn off the ADC
     //ADCSRA &= ~(1 << ADEN);
     ADCSRA = 0;
@@ -59,13 +71,8 @@ uint8_t adc_read8(void)
 }
 
 /* EC Matrix */
-#ifdef APC_ENABLE
-#define EC_AP_VALUE ec_ap_value
 static uint8_t ec_ap_value = 125;
-#else
-#define EC_AP_VALUE 128 //ec_ap_value // 120 for EC, 80 for MX
-#endif
-#define EC_RESET_OFFSET 10
+static uint8_t ec_rp_value = 120;
 uint8_t ec_actuation_point[MATRIX_ROWS][MATRIX_COLS] = {0};
 uint8_t ec_key_value[MATRIX_ROWS][MATRIX_COLS];
 //static bool ec_inited = 0;
@@ -75,7 +82,7 @@ static inline void ec_unselect_rows(void)
     // Clear row pin. Output low.
     PORTB = 0;
     DDRB = 0x7f;
-    if (BLE51_PowerState < 2) _delay_us(6);
+    if (IS_EEVEE1 && BLE51_PowerState < 2) _delay_us(6);
 }
 
 static inline void ec_select_row(uint8_t row)
@@ -117,7 +124,6 @@ void ec_select_col(uint8_t col)
     //if (col == 0) _delay_us(6);
 }
 
-
 // Read adc raw
 uint8_t ec_get_key(uint8_t row, uint8_t col)
 {
@@ -132,25 +138,38 @@ uint8_t ec_get_key(uint8_t row, uint8_t col)
     C_DISCHARGE();
     C_DISCHARGE_WAIT();
 
-    if (ec_key_value[row][col] < (EC_AP_VALUE - EC_RESET_OFFSET)) return 0;
-    else if (ec_key_value[row][col] >= EC_AP_VALUE) return 0x80;
+    if (ec_key_value[row][col] < ec_rp_value) return 0;
+    else if (ec_key_value[row][col] >= ec_ap_value) return 0x80;
     else return 0b10;
 }
 
-#ifdef APC_ENABLE
-#define EC_APC_KEY_POS (VIA_EEPROM_CONFIG_END+1 + (APC_KEY_ROW * MATRIX_COLS + APC_KEY_COL) * 2)
-void ec_apc_update(void)
+void user_config_init(void)
 {
-    static const uint8_t ec_ap_level[8] = {128, 90, 100, 110, 120, 128, 144, 152};
-    static uint8_t last_level = 10;
-    // 最后一个Layout，8个选项，占3bit。
-    uint8_t new_level = (eeprom_read_byte(VIA_EEPROM_LAYOUT_OPTIONS_ADDR) & 0b111);
-    if (new_level != last_level && new_level < 8) {
-        ec_ap_value = ec_ap_level[new_level];
-        last_level = new_level;
-    }
+    ec_apc_init();
 }
+
+void ec_apc_init(void)
+{
+    static const uint8_t ec_ap_level1[8] = {90, 100, 110, 120, 128, 136, 144, 152};
+#ifndef EC_AP_LEVEL2_USER
+    static const uint8_t ec_ap_level2[8] = {67,  72,  76,  80,  84,  88,  92,  95}; //Eevee2 EC
+#else
+    static const uint8_t ec_ap_level2[8] = EC_AP_LEVEL2_USER; //Eevee2 EC
 #endif
+    // 最后一个Layout，8个选项，占3bit。
+    #if (VIA_EEPROM_LAYOUT_OPTIONS_SIZE == 1) 
+    uint8_t ap_level = (eeprom_read_byte(VIA_EEPROM_LAYOUT_OPTIONS_ADDR) & 0b111);
+    #else
+    uint8_t ap_level = via_get_layout_options()&0b111;
+    #endif
+    
+    if (IS_EEVEE1) {
+        ec_ap_value = ec_ap_level1[ap_level];
+    } else {
+        ec_ap_value = ec_ap_level2[ap_level];
+    }
+    ec_rp_value = ec_ap_value - ap_level;
+}
 
 extern uint16_t scan_speed;
 void ec_matrix_print(void)
