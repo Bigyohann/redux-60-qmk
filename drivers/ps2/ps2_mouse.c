@@ -71,6 +71,12 @@ __attribute__((weak)) void ps2_mouse_init_user(void) {}
 
 __attribute__((weak)) void ps2_mouse_moved_user(report_mouse_t *mouse_report) {}
 
+#ifdef MOUSE_XY_MULTIPLIER
+extern uint8_t ps2_mouse_xy_multiplier;
+#define PS2_MOUSE_X_MULTIPLIER ps2_mouse_xy_multiplier
+#define PS2_MOUSE_Y_MULTIPLIER ps2_mouse_xy_multiplier
+#endif
+
 void ps2_mouse_task(void) {
     static uint8_t buttons_prev = 0;
     extern int     tp_buttons;

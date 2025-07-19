@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "stdint.h"
 #include "quantum.h"
 
+uint8_t ps2_mouse_xy_multiplier = 1;
 
 void led_set_user(uint8_t usb_led)
 {
@@ -116,6 +117,12 @@ void restart_usb_driver(USBDriver *usbp) {
     NVIC_SystemReset();
 }
 
+void user_config_init(void)
+{
+    ps2_mouse_xy_multiplier = (1 << (via_get_layout_options()&0b11));
+
+    rprint("Layout set change\n");
+}
 
 // Snap Tap / SOCD
 static const uint8_t SOCD_KEY[2][2] = {
