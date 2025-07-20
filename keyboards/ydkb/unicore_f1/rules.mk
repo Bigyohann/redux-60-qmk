@@ -1,5 +1,5 @@
 # project specific files
-SRC ?=	matrix.c led.c
+SRC ?=	matrix.c led.c rawhid_user.c
 
 # MCU name
 MCU = STM32F103

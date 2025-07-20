@@ -53,6 +53,30 @@ void single_color_indicator_set(uint8_t index, bool on)
         else palClearPad(GPIOA, 8);
     }
 }
+
+void set_rgb_user(uint8_t r, uint8_t g,  uint8_t b)
+{
+    for (uint8_t i=0; i<(PHY_INDICATOR_NUM+RGBLED_NUM); i++) {
+        rgbled[i].r = r;
+        rgbled[i].g = g;
+        rgbled[i].b = b;
+    }
+    ws2812_setleds(rgbled, PHY_INDICATOR_NUM+RGBLED_NUM);
+}
+
+void rgblight_user_init(void)
+{
+#ifdef CONFIG_BOOT_TEST_RGB
+    set_rgb_user(32, 0, 0);
+    wait_ms(300);
+    set_rgb_user(0, 32, 0);
+    wait_ms(300);
+    set_rgb_user(0, 0, 32);
+    wait_ms(300);
+#endif
+    set_rgb_user(0, 0, 0);
+}
+
 void rgblight_call_driver(LED_TYPE *start_led, uint8_t num_leds) {
     // keep indicator color
     for (uint8_t i=0; i<PHY_INDICATOR_NUM; i++) {
@@ -163,7 +187,7 @@ void restart_usb_driver(USBDriver *usbp) {
     NVIC_SystemReset();
 }
 
-void user_config_update(void)
+void user_config_init(void)
 {
     static const uint8_t indicator_hue_preset[8] = {0, 21, 42, 85, 127, 170, 212, 255};
     #ifdef INDICATOR_VAL
@@ -172,19 +196,17 @@ void user_config_update(void)
     static uint8_t val = 255;
     #endif
 
-    static uint16_t last_value = 0xffff;
-    uint16_t new_value = eeprom_read_word((void *)(VIA_EEPROM_LAYOUT_OPTIONS_ADDR));
-    if (new_value != last_value) {
-        last_value = new_value;
-        for (uint8_t i=0; i<3; i++) {
-            indicator_color_config[i] = (new_value & 0b111);
-            uint8_t hue = indicator_hue_preset[ indicator_color_config[i] ];
-            new_value >>= 3;
-            if (hue == 255) indicator_color[i] = (LED_TYPE){val/2, val/2, val/2};
-            else            indicator_color[i] = hsv_to_rgb((HSV){hue, 255, val});
-            xprintf("\n indicator %d R: %d, G: %d, B:%d", i, indicator_color[i].r, indicator_color[i].g, indicator_color[i].b);
-        }
+    uint16_t layout_value = via_get_layout_options();
+    for (uint8_t i=0; i<3; i++) {
+        indicator_color_config[i] = (layout_value & 0b111);
+        uint8_t hue = indicator_hue_preset[ indicator_color_config[i] ];
+        layout_value >>= 3;
+        if (hue == 255) indicator_color[i] = (LED_TYPE){val/2, val/2, val/2};
+        else            indicator_color[i] = hsv_to_rgb((HSV){hue, 255, val});
+        xprintf("\n indicator %d R: %d, G: %d, B:%d", i, indicator_color[i].r, indicator_color[i].g, indicator_color[i].b);
     }
+    led_wakeup(); //立即更新指示灯颜色
+    rprint("Layout set change\n");
 }
 
 //rgblight welcome
@@ -193,11 +215,6 @@ extern bool is_rgblight_initialized;
 extern LED_TYPE led[];
 void hook_keyboard_loop(void)
 {
-    static uint16_t one_second_timer = 0;
-    if (one_second_timer != timer_read() && timer_elapsed(one_second_timer) >= 1000) {
-        one_second_timer = timer_read();
-        user_config_update();
-    }
 #ifndef WELCOME_LIGHT
     return;
 #endif

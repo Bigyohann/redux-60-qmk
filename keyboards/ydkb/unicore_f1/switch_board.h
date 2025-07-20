@@ -22,11 +22,18 @@ static inline void KEY_SDI_ON(void) {
     }
 }
 
+static inline void sleep_us(int us){
+    for (int i = 0; i < us*10; i++) {
+        __asm__("nop");
+    }
+}
+
 static inline void get_key_ready(void) {
     // PB13 input
     palSetPadMode(GPIOB, 13, PAL_MODE_INPUT_PULLUP);
     // PB13 PB14 pull up
     palSetPad(GPIOB, 13);
+    sleep_us(2);
 }
 
 static inline void select_key_ready(void) {

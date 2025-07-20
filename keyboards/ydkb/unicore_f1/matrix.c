@@ -43,7 +43,7 @@ static matrix_row_t matrix[MATRIX_ROWS] = {0};
 static uint16_t matrix_scan_timestamp = 0;
 static uint8_t matrix_debouncing[MATRIX_ROWS][MATRIX_COLS] = {0};
 static uint8_t matrix_double_click_fix[MATRIX_ROWS][MATRIX_COLS] = {0};
-static uint8_t now_debounce_dn_mask = DEBOUNCE_NK_MASK;
+static uint8_t now_debounce_dn_mask = DEBOUNCE_DN_MASK;
 static bool matrix_idle = false;
 static bool first_key_scan = false;
 
@@ -69,7 +69,9 @@ void matrix_init(void)
     debug_config.enable = 1;
     debug_config.matrix = 0;
 
-    //check ver595 or ver5020
+    user_config_init();
+
+    //check ver595 or ver5020. PB9
     palSetPadMode(GPIOB, 9, PAL_MODE_INPUT_PULLUP);
     palSetPad(GPIOB, 9);
     //check if single color led indicators. PB8
@@ -87,7 +89,7 @@ void matrix_init(void)
     palClearPad(GPIOA, 8);
 
     init_cols();
-    rgblight_set();
+    rgblight_user_init();
 }
 
 static bool process_key_press = 0;
@@ -118,6 +120,9 @@ uint8_t matrix_scan(void)
     select_key(0);
     uint8_t matrix_keys_idle = 0;
     for (uint8_t row=0; row<MATRIX_ROWS; row++) {
+      #ifdef MAX_ROWS
+        if (row >= MAX_ROWS) break;
+      #endif
         for (uint8_t col=0; col<MATRIX_COLS; col++) {
             uint8_t *debounce = &matrix_debouncing[row][col];
             uint8_t *double_click_fix = &matrix_double_click_fix[row][col];
@@ -231,20 +236,42 @@ static void select_key(uint8_t mode)
     get_key_ready();
 }
 
+#include "eeprom.h"
+#include "via.h"
+
 void bootmagic_lite(void)
 {
-#ifdef SOFTWARE_ESC_BOOTLOADER
-    wait_ms(200);
-    matrix_scan();
-    matrix_scan();
-    // only the first key(esc) is pressed
-    uint16_t boot_key = matrix_get_row(0);
-    if (boot_key == 1) {  // only top left
-        uint8_t row = MATRIX_ROWS;
-        while (row-- > 1) boot_key += matrix_get_row(row);
-        if (boot_key == 1) enter_bootloader();
+    for (uint8_t i=0; i < (DEBOUNCE_DN * 2); i++) {
+        matrix_scan();
+        wait_ms(2);
     }
-#endif
+
+    //check result
+    uint8_t keys_down_pos[3] = {0xff, 0xff, 0xff};
+    uint8_t i = 0;
+    for (uint8_t row=0; row<MATRIX_ROWS; row++) {
+      #ifdef MAX_ROWS
+        if (row >= MAX_ROWS) break;
+      #endif
+        for (uint8_t col=0; col<MATRIX_COLS; col++) {
+            if (matrix_get_row(row) & (1<<col)) {
+                keys_down_pos[i] = row * MATRIX_COLS + col;
+                if (i < 2) i++;
+            }
+        }
+    }
+
+    if (keys_down_pos[0] == 0) { 
+        if (keys_down_pos[1] == 0xff) {
+            // only esc down
+            enter_bootloader();
+        } else if (keys_down_pos[2] == 0xff) {
+            //two keys down. if the other key is KC_E, clear eeprom.
+            if (eeprom_read_byte(VIA_EEPROM_CONFIG_END+1 + keys_down_pos[1]*2) == KC_E) {
+                eeconfig_init_via();
+            }
+        }
+    }
 }
 
 void early_hardware_init_pre(void)

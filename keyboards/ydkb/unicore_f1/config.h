@@ -3,7 +3,7 @@
 #include "config_common.h"
 
 /* USB Device descriptor parameter */
-#define FW_VER_DATE     DP1H
+#define FW_VER_DATE     DP6M
 #define CONTACT(x,y)    x##y
 #define CONTACT2(x,y)   CONTACT(x,y)
 #define FW_VER          CONTACT2(VIAL_, FW_VER_DATE)
@@ -23,8 +23,9 @@
 /* key matrix size */
 #define MATRIX_ROWS 14 //max supported
 #define MATRIX_COLS 8
+#define VIA_EEPROM_LAYOUT_OPTIONS_SIZE 2 //default 1,  not enough for ec_ap and indicator color
 //#define FORCE_NKRO //When FORCE_NKRO, Enable NKRO in QMK Settings will not be saved
-#define SOFTWARE_ESC_BOOTLOADER
+//#define SOFTWARE_ESC_BOOTLOADER
 
 #define RGBLIGHT_EFFECT_BREATHING
 #define RGBLIGHT_EFFECT_RAINBOW_MOOD
