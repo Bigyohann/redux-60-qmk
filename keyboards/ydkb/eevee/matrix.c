@@ -203,6 +203,7 @@ bool suspend_wakeup_condition(void)
     uint8_t matrix_keys_down = matrix_scan();
     if (matrix_keys_down == 0) return false;
 
+#if 0
     if (BLE51_PowerState>= 10) {//lock mode
         if (matrix_keys_down == 2) {
             uint8_t *debounce = &matrix_debouncing[0][0];
@@ -223,6 +224,31 @@ bool suspend_wakeup_condition(void)
         if (!ble51_boot_on) return true;
         return false;
     }
+#else
+    if (BLE51_PowerState>= 10) {//lock mode
+        if (matrix_keys_down == 2) {
+            uint8_t *debounce = &matrix_debouncing[0][0];
+            uint8_t fj_key_down = 0;
+            for (uint8_t i=0; i< sizeof(matrix_debouncing); i++, *debounce++) {
+                if (*debounce == 0xff) {
+                    // Read F and J from dynamic keymap layer0 in eeprom
+                    // qmk use Big-Endian, so addr+1
+                    uint8_t unimap_offset = i*2;
+                    uint8_t checking_key = eeprom_read_byte(VIA_EEPROM_CONFIG_END+1 + unimap_offset);
+                    if (checking_key == UNLOCK_KEY1 || checking_key == UNLOCK_KEY2) fj_key_down++;
+                    else return false; //if not f j
+                }
+            }
+            if (fj_key_down == 2) {
+                // not return false, then true.
+                if (!ble51_boot_on) command_extra(KC_W);
+                return true;
+            }
+        }
+        if (!ble51_boot_on) return true;
+        return false;
+    }
+#endif
 
     return matrix_keys_down;
 }

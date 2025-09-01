@@ -90,9 +90,12 @@ bool via_eeprom_is_valid(void) {
     // use 16bit,and it should not be 0xffff.
     return (eeprom_read_word((void *)VIA_EEPROM_MAGIC_ADDR) == (BUILD_ID & 0xfffe));
   #endif
-    uint8_t magic0 = BUILD_ID & 0xFF;
-    uint8_t magic1 = (BUILD_ID >> 8) & 0xFF;
-    uint8_t magic2 = (BUILD_ID >> 16) & 0xFF;
+    uint8_t magic0 = PRODUCT_ID  & 0xFF;
+    uint8_t magic1 = (PRODUCT_ID >> 8) & 0xFF;
+    uint8_t magic2 = DEVICE_VER & 0xFF;  //Ver format: A.B.C. use 0xBC
+    //uint8_t magic0 = BUILD_ID & 0xFF;
+    //uint8_t magic1 = (BUILD_ID >> 8) & 0xFF;
+    //uint8_t magic2 = (BUILD_ID >> 16) & 0xFF;
 #else
     char *  p      = QMK_BUILDDATE; // e.g. "2019-11-05-11:29:54"
     uint8_t magic0 = ((p[2] & 0x0F) << 4) | (p[3] & 0x0F);
@@ -111,9 +114,12 @@ void via_eeprom_set_valid(bool valid) {
     eeprom_update_word((void *)VIA_EEPROM_MAGIC_ADDR, valid ? (BUILD_ID & 0xfffe) : 0xffff);
     return;
   #endif
-    uint8_t magic0 = BUILD_ID & 0xFF;
-    uint8_t magic1 = (BUILD_ID >> 8) & 0xFF;
-    uint8_t magic2 = (BUILD_ID >> 16) & 0xFF;
+    uint8_t magic0 = PRODUCT_ID  & 0xFF;
+    uint8_t magic1 = (PRODUCT_ID >> 8) & 0xFF;
+    uint8_t magic2 = DEVICE_VER & 0xFF;  //Ver format: A.B.C. use 0xBC
+    //uint8_t magic0 = BUILD_ID & 0xFF;
+    //uint8_t magic1 = (BUILD_ID >> 8) & 0xFF;
+    //uint8_t magic2 = (BUILD_ID >> 16) & 0xFF;
 #else
     char *  p      = QMK_BUILDDATE; // e.g. "2019-11-05-11:29:54"
     uint8_t magic0 = ((p[2] & 0x0F) << 4) | (p[3] & 0x0F);

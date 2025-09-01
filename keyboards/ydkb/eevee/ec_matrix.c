@@ -152,7 +152,8 @@ void ec_apc_init(void)
 {
     static const uint8_t ec_ap_level1[8] = {90, 100, 110, 120, 128, 136, 144, 152};
 #ifndef EC_AP_LEVEL2_USER
-    static const uint8_t ec_ap_level2[8] = {67,  72,  76,  80,  84,  88,  92,  95}; //Eevee2 EC
+    //static const uint8_t ec_ap_level2[8] = {67,  72,  76,  80,  84,  88,  92,  95}; //Eevee2 EC
+    static const uint8_t ec_ap_level2[8] = {67,  70,  72,  74,  76,  78,  80,  82}; //Eevee2 EC
 #else
     static const uint8_t ec_ap_level2[8] = EC_AP_LEVEL2_USER; //Eevee2 EC
 #endif
