@@ -21,8 +21,9 @@
 #define USB_MAX_POWER_CONSUMPTION 350
 #define WAIT_FOR_USB
 
+
 /* key matrix size */
-#define MATRIX_ROWS 5 
+#define MATRIX_ROWS 5
 #define MATRIX_COLS 15
 //#define FORCE_NKRO //When FORCE_NKRO, Enable NKRO in QMK Settings will not be saved
 
