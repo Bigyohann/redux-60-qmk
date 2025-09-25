@@ -116,29 +116,6 @@ void restart_usb_driver(USBDriver *usbp) {
     NVIC_SystemReset();
 }
 
-void user_config_update(void)
-{
-    static const uint8_t indicator_hue_preset[8] = {0, 21, 42, 85, 127, 170, 212, 255};
-    #ifdef INDICATOR_VAL
-    static uint8_t val = INDICATOR_VAL;
-    #else 
-    static uint8_t val = 255;
-    #endif
-
-    static uint16_t last_value = 0xffff;
-    uint16_t new_value = eeprom_read_word((void *)(VIA_EEPROM_LAYOUT_OPTIONS_ADDR));
-    if (new_value != last_value) {
-        last_value = new_value;
-        for (uint8_t i=0; i<3; i++) {
-            indicator_color_config[i] = (new_value & 0b111);
-            uint8_t hue = indicator_hue_preset[ indicator_color_config[i] ];
-            new_value >>= 3;
-            if (hue == 255) indicator_color[i] = (LED_TYPE){val/2, val/2, val/2};
-            else            indicator_color[i] = hsv_to_rgb((HSV){hue, 255, val});
-            xprintf("\n indicator %d R: %d, G: %d, B:%d", i, indicator_color[i].r, indicator_color[i].g, indicator_color[i].b);
-        }
-    }
-}
 
 //rgblight welcome
 extern rgblight_config_t rgblight_config;
@@ -149,7 +126,6 @@ void hook_keyboard_loop(void)
     static uint16_t one_second_timer = 0;
     if (one_second_timer != timer_read() && timer_elapsed(one_second_timer) >= 1000) {
         one_second_timer = timer_read();
-        user_config_update();
     }
 #ifndef WELCOME_LIGHT
     return;
@@ -164,24 +140,3 @@ static const uint8_t SOCD_KEY[2][2] = {
 
 bool socd_key_state[2][2] = { {0,0},{0,0}};
 
-void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
-    if (keycode >= USER00 && keycode <= USER03) {
-        uint8_t key = keycode - USER00;
-        uint8_t k_group = key&1;
-        uint8_t k_num = key>>1;
-        uint8_t k_op_num = k_num?0:1;
-        if (record->event.pressed) {
-            socd_key_state[k_group][k_num] = 1;
-            if (socd_key_state[k_group][k_op_num]) {
-                unregister_code(SOCD_KEY[k_group][k_op_num]);
-            }
-            register_code(SOCD_KEY[k_group][k_num]);
-        } else {
-            socd_key_state[k_group][k_num] = 0;
-            unregister_code(SOCD_KEY[k_group][k_num]);
-            if (socd_key_state[k_group][k_op_num]) {
-                register_code(SOCD_KEY[k_group][k_op_num]);
-            }
-        }
-    }
-}
