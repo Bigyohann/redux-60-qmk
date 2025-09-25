@@ -39,7 +39,6 @@
 #define RGBLIGHT_EFFECT_TWINKLE
 #define RGBLIGHT_DEFAULT_MODE 7 // defaut: RAINBOW_MOOD
 
-#define RGBLIGHT_LIMIT_VAL must_redefine
 #define RGBLIGHT_SLEEP
 #define RGB_DI_PIN A7
 #define RGBLED_NUM must_redefine
@@ -48,9 +47,4 @@
 
 //#define SUSPEND_ACTION
 
-/* key combination for command */
-#define IS_COMMAND() ( \
-    (get_mods() == (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_RSHIFT))) || \
-    (get_mods() == (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_LCTRL) | MOD_BIT(KC_RSHIFT))) \
-)
 
