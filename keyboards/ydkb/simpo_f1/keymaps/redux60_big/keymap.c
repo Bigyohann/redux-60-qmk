@@ -54,6 +54,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_LSFT,          KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,          KC_RSFT,
     KC_LCTL, KC_LGUI, KC_LALT,          KC_SPC,                          MO(_LOWER), MO(_RAISE), KC_APP,  KC_RCTL
     ),
+    
 
     /* _RAISE Layer: Navigation, F-keys, Symbols
     * ,---------------------------------------------------------------------------------.
@@ -90,13 +91,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     * `---------------------------------------------------------------------------------'
     */
     [_LOWER] = LAYOUT_60_ansi(
-    RESET,   _______, _______, _______, _______, _______, KC_MPRV, KC_MPLY, KC_MNXT, KC_MUTE, KC_VOLD, KC_VOLU,  _______, _______, 
+    QK_BOOTLOADER, _______, _______, _______, _______, _______, KC_MPRV, KC_MPLY, KC_MNXT, KC_MUTE, KC_VOLD, KC_VOLU,  _______, _______, 
     _______, _______, _______, _______, _______, _______, _______, KC_MUTE, KC_VOLU, KC_VOLD, _______, _______, _______, _______,
     _______, _______, _______, _______, _______, _______, KC_MPRV, KC_MPLY, KC_MNXT, _______, _______, _______,          TG(_CODE),
     _______,          RGB_TOG, RGB_MOD, RGB_HUI, RGB_SAI, RGB_VAI, _______, _______, _______, _______, _______,          _______,
     _______, _______, _______,          _______,                          _______, _______, _______, _______
     )
-};       
+};
 
 // process_record_user function to handle custom keycodes and layer switching
 // store variable for gaming mode
@@ -116,6 +117,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case KC_GAMING:
             if (record->event.pressed) {
                 gaming_mode = !gaming_mode;
+            }
+            break;
+        case QK_BOOTLOADER:
+            if (record->event.pressed) {
+                clear_keyboard();
+                volatile uint32_t *uf2bl_backup_reg = (uint32_t*)0x20004000;
+                *uf2bl_backup_reg = 0x9d5bfc2bUL;
+                NVIC_SystemReset();
             }
             break;
     }
