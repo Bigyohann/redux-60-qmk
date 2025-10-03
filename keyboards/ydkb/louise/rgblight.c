@@ -129,7 +129,7 @@ void eeconfig_debug_rgblight(void) {
 void rgblight_init(void)
 {
     dprintf("rgblight_init start!\n");
-#if 0
+#if 1
     if (!eeconfig_is_enabled()) {
         dprintf("rgblight_init eeconfig is not enabled.\n");
         eeconfig_init();
@@ -278,7 +278,6 @@ void rgblight_set(void)
     ws2812_setleds(rgbled);
 }
 
-inline
 void rgblight_task(void)
 {
     //if (rgblight_config.enable && rgblight_timer_enabled) {

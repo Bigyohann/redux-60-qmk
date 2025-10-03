@@ -4,7 +4,7 @@
 #include "config_ble51.h"
 
 /* USB Device descriptor parameter */
-#define FW_VER_DATE     DO6A
+#define FW_VER_DATE     DPA3
 #define VENDOR_ID       0x9D5B 
 #define PRODUCT_ID      0x2060
 #define DEVICE_VER      0x0001

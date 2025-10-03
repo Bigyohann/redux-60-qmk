@@ -595,6 +595,9 @@ void keyboard_task(void) {
     const bool matrix_changed = matrix_task();
     if (matrix_changed) {
         last_matrix_activity_trigger();
+      #if defined(PROTOCOL_BLE51) && !defined(NOT_BLE)
+        ble51_stop_sending_end_action();
+      #endif
     }
 
     quantum_task();

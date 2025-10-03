@@ -122,6 +122,7 @@ int main(void)
                 kb_idle_times = 0; 
                 if (ble51_boot_on) {
                     BLE51_PowerState = 1;
+                    ble51_stop_sending = 1;
                     if (BT_POWERED) {
                         update_battery(1);
                     } else {

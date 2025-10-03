@@ -41,7 +41,6 @@ static matrix_row_t matrix[MATRIX_ROWS] = {0};
 
 static uint16_t matrix_scan_timestamp = 0;
 static uint8_t matrix_debouncing[MATRIX_ROWS][MATRIX_COLS] = {0};
-static uint8_t now_debounce_dn_mask = DEBOUNCE_NK_MASK;
 static void select_key(uint8_t mode);
 static uint8_t get_key(void);
 
@@ -111,10 +110,12 @@ void matrix_init(void)
 
 uint8_t matrix_scan(void)
 {
-    
+#ifdef LIMIT_SCAN_1000HZ
     uint16_t time_check = timer_read();
     if (matrix_scan_timestamp == time_check) return 1;
     matrix_scan_timestamp = time_check;
+#endif
+
     uint8_t matrix_keys_down = 0;
 
     select_key(0);
@@ -128,7 +129,7 @@ uint8_t matrix_scan(void)
             if (1) {
                 matrix_row_t *p_row = &matrix[row];
                 matrix_row_t col_mask = ((matrix_row_t)1 << col);
-                if        (*debounce >= DEBOUNCE_DN_MASK) {  //debounce KEY DOWN
+                if        (*debounce >= DEBOUNCE_NK_MASK) {  //debounce KEY DOWN
                     *p_row |=  col_mask;
                 } else if (*debounce <= DEBOUNCE_UP_MASK) { //debounce KEY UP
                     *p_row &= ~col_mask;
@@ -219,7 +220,7 @@ static void select_key(uint8_t mode)
         DS_PL_HI();
         CLOCK_PULSE();
     }
-    _delay_us(3);
+    _delay_us(1);
 }
 
 

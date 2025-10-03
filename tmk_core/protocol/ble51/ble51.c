@@ -268,11 +268,10 @@ void ble51_clear_keys(void){
     if (keyboard_protocol & (1<<7)) clear_keyboard();
 }
 
-// not used any more.
 void ble51_stop_sending_end_action(void) {
     if (ble51_stop_sending) {
         ble51_stop_sending = 0;
-        send_keyboard_report();
+        host_keyboard_send(keyboard_report);
     } 
 }
 

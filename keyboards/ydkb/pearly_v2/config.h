@@ -4,7 +4,7 @@
 #include "config_ble51.h"
 
 /* USB Device descriptor parameter */
-#define FW_VER_DATE     DP18
+#define FW_VER_DATE     DPA3
 #define VENDOR_ID       0x9D5B 
 #define PRODUCT_ID      0x2242
 #define DEVICE_VER      0x0001
@@ -15,15 +15,11 @@
 #define PRODUCT         Pearly v2 (FW_VER)
 #endif
 
-
 #define MATRIX_ROWS 4
 #define MATRIX_COLS 12
 
-
-
 #define TAPPING_TOGGLE  2
-
-
+//#define TAPPING_TERM 150
 
 #define DEFAULT_6KRO // macOS's Capslock switching between Chinese and English has compatibility issues with NKRO
 

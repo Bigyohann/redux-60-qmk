@@ -50,7 +50,6 @@ static uint8_t matrix_current_row = 0;
 static uint16_t matrix_scan_timestamp = 0;
 static uint8_t matrix_debouncing[MATRIX_ROWS][MATRIX_COLS] = {0};
 static uint8_t encoder_state_prev[1][2] = {0};
-static uint8_t now_debounce_dn_mask = DEBOUNCE_NK_MASK;
 static void select_key(uint8_t mode);
 static uint8_t get_key(uint8_t col);
 
@@ -73,10 +72,10 @@ void hook_early_init()
         // PD1 for BLE Reset, PF0 for BT_SW
         DDRD  &= ~(1<<1);
         PORTD |=  (1<<1);
-        DDRF  &= ~(1<<0);
-        PORTF |=  (1<<0); 
-        _delay_ms(2);
-        if (~PINF & (1<<0)) ble51_boot_on = 0;
+        //DDRF  &= ~(1<<0);
+        //PORTF |=  (1<<0); 
+        //_delay_ms(3);
+        //if (~PINF & (1<<0)) ble51_boot_on = 0;
         //BLE Reset
         if (ble_reset_key == 0xBBAA) {
             ble_reset_key = 0;
@@ -123,12 +122,10 @@ uint8_t matrix_scan(void)
             *debounce = (*debounce >> 1) | key;
 
             if (real_col >= 8) select_key(1);
-
-            //if ((*debounce > 0) && (*debounce < 255)) {
             if (1) {
                 matrix_row_t *p_row = &matrix[row];
                 matrix_row_t col_mask = ((matrix_row_t)1 << real_col);
-                if        (*debounce >= DEBOUNCE_DN_MASK) {  //debounce KEY DOWN
+                if        (*debounce >= DEBOUNCE_NK_MASK) {  //debounce KEY DOWN
                     *p_row |=  col_mask;
                 } else if (*debounce <= DEBOUNCE_UP_MASK) { //debounce KEY UP
                     *p_row &= ~col_mask;
@@ -162,10 +159,10 @@ matrix_row_t matrix_get_row(uint8_t row)
 
 void matrix_print(void)
 {
-    print("\nr/c 01234567\n");
+    print("\nr/c 0123456789ABCDEF\n");
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         print_hex8(row); print(": ");
-        print_bin_reverse8(matrix_get_row(row));
+        print_bin_reverse16(matrix_get_row(row));
         print("\n");
     }
 }
@@ -195,10 +192,10 @@ static uint8_t get_key_f(uint8_t col) {
 
 }
 
-uint8_t get_key(uint8_t col)
+static uint8_t get_key(uint8_t col)
 {
     uint8_t value = get_key_f(col);
-    if (matrix_current_row < 2 && col == 15) {
+    if (col == 15 && matrix_current_row < 2) {
         static uint8_t encoder_debounce = 0;
         static uint16_t encoder_idle_timer;
         uint8_t encoder_state_new = 0;
@@ -241,7 +238,7 @@ static void select_key(uint8_t mode)
         DS_PL_HI();
         CLOCK_PULSE();
     }
-    _delay_us(3);
+    _delay_us(1);
 }
 
 

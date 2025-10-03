@@ -405,7 +405,7 @@ void hook_keyboard_loop()
     static uint8_t steps = 0;
     if (timer_elapsed(rgb_update_timer) > 40) {
         rgb_update_timer = timer_read();
-        if (!display_connection_status_check_times) rgblight_task();
+        if (!display_connection_status_check_times || !ble51_boot_on) rgblight_task();
 
         if ((steps++ & 0b11)) return;
         //led_status_task();

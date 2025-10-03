@@ -12,6 +12,7 @@
 #define CLOCK_PULSE() \
     do { \
         PORTB |= (1<<1); \
+        asm("nop"); \
         PORTB &= ~(1<<1); \
     } while(0)
 

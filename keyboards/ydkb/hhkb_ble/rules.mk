@@ -11,8 +11,9 @@ BOOTLOADER_SIZE = 6144
 # Build Options
 #   change yes to no to disable
 #
+#KEYBOARD_SHARED_EP      = yes # save 54B https://docs.qmk.fm/config_options#usb-endpoint-limitations
 CUSTOM_MATRIX           = yes # Custom matrix file
-#UNICODE_ENABLE          = yes # Unicode
+UNICODE_ENABLE          = no  # Unicode
 BOOTMAGIC_ENABLE        = yes # Enable Bootmagic Lite
 MOUSEKEY_ENABLE         = yes # Mouse keys
 EXTRAKEY_ENABLE         = yes # Audio control and System control
