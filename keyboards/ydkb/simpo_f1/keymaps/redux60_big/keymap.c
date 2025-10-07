@@ -99,8 +99,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     )
 };
 
-// process_record_user function to handle custom keycodes and layer switching
-// store variable for gaming mode
 bool    gaming_mode = false;
 uint8_t mod_state;
 
@@ -110,6 +108,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case KC_TAB:
             if (mod_state == MOD_BIT(KC_LALT) && gaming_mode == true) {
+                return false;
+            }
+            return true;
+            break;
+        case KC_LGUI:
+            if (gaming_mode == true) {
                 return false;
             }
             return true;
