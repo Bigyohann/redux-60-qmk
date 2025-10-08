@@ -4,28 +4,22 @@
 #include "config_common.h"
 
 /* USB Device descriptor parameter */
-#define FW_VER_DATE     DP3F
-#define CONTACT(x,y)    x##y
-#define CONTACT2(x,y)   CONTACT(x,y)
-#define FW_VER          CONTACT2(VIAL_, FW_VER_DATE)
-#define VENDOR_ID       0x9D5B
-#define PRODUCT_ID      0x2450
-#define DEVICE_VER      0x0001
-#define MANUFACTURER    KBDFans_YDKB
+#define FW_VER_DATE DP3F
+#define CONTACT(x, y) x##y
+#define CONTACT2(x, y) CONTACT(x, y)
+#define FW_VER CONTACT2(VIAL_, FW_VER_DATE)
 #if CONSOLE_ENABLE
-#define PRODUCT         Simpo_F1 Uni Debug (FW_VER)
+#    define PRODUCT Simpo_F1 Uni Debug(FW_VER)
 #else
-#define PRODUCT         Simpo_F1 Uni(FW_VER)
+#    define PRODUCT Simpo_F1 Uni(FW_VER)
 #endif
 
-#define USB_MAX_POWER_CONSUMPTION 350
 #define WAIT_FOR_USB
-
-
+#define RGBLED_NUM 79
 /* key matrix size */
 #define MATRIX_ROWS 5
 #define MATRIX_COLS 15
-//#define FORCE_NKRO //When FORCE_NKRO, Enable NKRO in QMK Settings will not be saved
+// #define FORCE_NKRO //When FORCE_NKRO, Enable NKRO in QMK Settings will not be saved
 
 #define RGBLIGHT_EFFECT_BREATHING
 #define RGBLIGHT_EFFECT_RAINBOW_MOOD
@@ -41,10 +35,7 @@
 
 #define RGBLIGHT_SLEEP
 #define RGB_DI_PIN A7
-#define RGBLED_NUM must_redefine
 
 #define DRIVER_LED_TOTAL must_redefine
 
-//#define SUSPEND_ACTION
-
-
+// #define SUSPEND_ACTION
